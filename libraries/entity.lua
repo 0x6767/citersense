@@ -73,12 +73,21 @@ local function waitForChildOfType(obj, name, timeout, prop)
 end
 
 entitylib.targetCheck = function(ent)
+	if not ent or not lplr or not lplr.Character then
+		return false
+	end
 	if ent.TeamCheck then
 		return ent:TeamCheck()
 	end
-	if ent.NPC then return true end
+	if ent.NPC then 
+		return true 
+	end
+	if not ent.Character or not ent.Character.Parent or not lplr.Character.Parent then
+		return false
+	end
 	return ent.Character.Parent ~= lplr.Character.Parent
 end
+
 
 entitylib.getUpdateConnections = function(ent)
 	local hum = ent.Humanoid
