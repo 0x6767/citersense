@@ -77,7 +77,6 @@ entitylib.targetCheck = function(ent)
 		return ent:TeamCheck()
 	end
 	if ent.NPC then return true end
-	if not lplr.Character and not ent.Character then return end
 	return ent.Character.Parent ~= lplr.Character.Parent
 end
 
