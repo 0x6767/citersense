@@ -49,7 +49,7 @@ local function getMousePosition()
 	if inputService.TouchEnabled then
 		return gameCamera.ViewportSize / 2
 	end
-	return inputService.GetMouseLocation(inputService)
+	return inputService:GetMouseLocation()
 end
 
 local function loopClean(tbl)
@@ -73,21 +73,10 @@ local function waitForChildOfType(obj, name, timeout, prop)
 end
 
 entitylib.targetCheck = function(ent)
-	if not ent or not lplr or not lplr.Character then
-		return false
-	end
-	if ent.TeamCheck then
-		return ent:TeamCheck()
-	end
-	if ent.NPC then 
-		return true 
-	end
-	if not ent.Character or not ent.Character.Parent or not lplr.Character.Parent then
-		return false
-	end
-	return ent.Character.Parent ~= lplr.Character.Parent
+	if ent.NPC then return true end
+	if not lplr.Character or not ent.Character then return false end
+	return lplr.Character.Parent ~= ent.Character.Parent
 end
-
 
 entitylib.getUpdateConnections = function(ent)
 	local hum = ent.Humanoid
@@ -98,7 +87,7 @@ entitylib.getUpdateConnections = function(ent)
 end
 
 entitylib.isVulnerable = function(ent)
-	return ent.Health > 0 and not ent.Character.FindFirstChildWhichIsA(ent.Character, 'ForceField')
+	return ent.Health > 0 and not ent.Character:FindFirstChildWhichIsA('ForceField')
 end
 
 entitylib.getEntityColor = function(ent)
@@ -126,7 +115,7 @@ entitylib.Wallcheck = function(origin, position, ignoreobject)
 		ignoreobject = entitylib.IgnoreObject
 		ignoreobject.FilterDescendantsInstances = ignorelist
 	end
-	return workspace.Raycast(workspace, origin, (position - origin), ignoreobject)
+	return workspace:Raycast(origin, (position - origin), ignoreobject)
 end
 
 entitylib.EntityMouse = function(entitysettings)
@@ -136,7 +125,7 @@ entitylib.EntityMouse = function(entitysettings)
 			if not entitysettings.Players and v.Player then continue end
 			if not entitysettings.NPCs and v.NPC then continue end
 			if not v.Targetable then continue end
-			local position, vis = gameCamera.WorldToViewportPoint(gameCamera, v[entitysettings.Part].Position)
+			local position, vis = gameCamera:WorldToViewportPoint(v[entitysettings.Part].Position)
 			if not vis then continue end
 			local mag = (mouseLocation - Vector2.new(position.x, position.y)).Magnitude
 			if mag > entitysettings.Range then continue end
@@ -243,7 +232,7 @@ entitylib.addEntity = function(char, plr, teamfunc)
 	if not char then return end
 	entitylib.EntityThreads[char] = task.spawn(function()
 		local hum = waitForChildOfType(char, 'Humanoid', 10)
-		local humrootpart = hum and waitForChildOfType(hum, 'RootPart', workspace.StreamingEnabled and 9e9 or 10, true)
+		local humrootpart = hum and waitForChildOfType(char, 'HumanoidRootPart', workspace.StreamingEnabled and 9e9 or 10)
 		local head = char:WaitForChild('Head', 10) or humrootpart
 
 		if hum and humrootpart then
@@ -280,24 +269,6 @@ entitylib.addEntity = function(char, plr, teamfunc)
 				table.insert(entitylib.List, entity)
 				entitylib.Events.EntityAdded:Fire(entity)
 			end
-			--[[table.insert(entity.Connections, char.ChildRemoved:Connect(function(part)
-				if (part == humrootpart or part == hum or part == head) then
-					local found = char:FindFirstChild(part.Name)
-					if found then
-						if part == humrootpart then
-							entity.HumanoidRootPart = found
-							entity.RootPart = found
-							humrootpart = found
-							return
-						elseif part == head then
-							entity.Head = found
-							head = found
-							return
-						end
-					end
-					entitylib.removeEntity(char, plr == lplr)
-				end
-			end))]]
 		end
 		entitylib.EntityThreads[char] = nil
 	end)
@@ -312,7 +283,6 @@ entitylib.removeEntity = function(char, localcheck)
 			end
 			table.clear(entitylib.character.Connections)
 			entitylib.Events.LocalRemoved:Fire(entitylib.character)
-			--table.clear(entitylib.character)
 		end
 		return
 	end
@@ -351,7 +321,7 @@ entitylib.addPlayer = function(plr)
 		plr.CharacterRemoving:Connect(function(char)
 			entitylib.removeEntity(char, plr == lplr)
 		end),
-		plr:GetPropertyChangedSignal('Team'):Connect(function()
+		plr.Character:FindFirstChild('Humanoid'):GetPropertyChangedSignal('Team'):Connect(function()
 			for _, v in entitylib.List do
 				if v.Targetable ~= entitylib.targetCheck(v) then
 					entitylib.refreshEntity(v.Character, v.Player)
@@ -375,7 +345,7 @@ entitylib.removePlayer = function(plr)
 		table.clear(entitylib.PlayerConnections[plr])
 		entitylib.PlayerConnections[plr] = nil
 	end
-	entitylib.removeEntity(plr)
+	entitylib.removeEntity(plr.Character)
 end
 
 entitylib.start = function()
