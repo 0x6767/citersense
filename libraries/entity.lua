@@ -317,23 +317,22 @@ entitylib.addPlayer = function(plr)
 	entitylib.PlayerConnections[plr] = {
 		plr.CharacterAdded:Connect(function(char)
 			entitylib.refreshEntity(char, plr)
+			char:GetPropertyChangedSignal("Parent"):Connect(function()
+				for _, ent in entitylib.List do
+					if ent.Character and lplr.Character and ent.Targetable ~= (lplr.Character.Parent ~= ent.Character.Parent) then
+						entitylib.refreshEntity(ent.Character, ent.Player)
+					end
+				end
+				if plr == lplr then
+					entitylib.start()
+				else
+					entitylib.refreshEntity(char, plr)
+				end
+			end)
 		end),
 		plr.CharacterRemoving:Connect(function(char)
 			entitylib.removeEntity(char, plr == lplr)
 		end),
-	plr.Character:GetPropertyChangedSignal('Parent'):Connect(function()
-		for _, ent in entitylib.List do
-			if ent.Character and lplr.Character and ent.Targetable ~= (lplr.Character.Parent ~= ent.Character.Parent) then
-				entitylib.refreshEntity(ent.Character, ent.Player)
-			end
-		end
-	
-		if plr == lplr then
-			entitylib.start()
-		else
-			entitylib.refreshEntity(plr.Character, plr)
-		end
-	end)
 	}
 end
 
