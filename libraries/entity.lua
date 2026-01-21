@@ -313,27 +313,57 @@ end
 entitylib.addPlayer = function(plr)
 	if plr.Character then
 		entitylib.refreshEntity(plr.Character, plr)
-	end
-	entitylib.PlayerConnections[plr] = {
-		plr.CharacterAdded:Connect(function(char)
-			entitylib.refreshEntity(char, plr)
-			char:GetPropertyChangedSignal("Parent"):Connect(function()
+
+		table.insert(entitylib.PlayerConnections[plr] or {}, 
+			plr.Character:GetPropertyChangedSignal('Parent'):Connect(function()
 				for _, ent in entitylib.List do
-					if ent.Character and lplr.Character and ent.Targetable ~= (lplr.Character.Parent ~= ent.Character.Parent) then
+					if ent.Character
+					and lplr.Character
+					and ent.Targetable ~= (lplr.Character.Parent ~= ent.Character.Parent) then
 						entitylib.refreshEntity(ent.Character, ent.Player)
 					end
 				end
+
 				if plr == lplr then
 					entitylib.start()
 				else
-					entitylib.refreshEntity(char, plr)
+					entitylib.refreshEntity(plr.Character, plr)
 				end
 			end)
-		end),
+		)
+	end
+
+	entitylib.PlayerConnections[plr] = entitylib.PlayerConnections[plr] or {}
+
+	table.insert(entitylib.PlayerConnections[plr],
+		plr.CharacterAdded:Connect(function(char)
+			entitylib.refreshEntity(char, plr)
+
+			table.insert(entitylib.PlayerConnections[plr],
+				char:GetPropertyChangedSignal('Parent'):Connect(function()
+					for _, ent in entitylib.List do
+						if ent.Character
+						and lplr.Character
+						and ent.Targetable ~= (lplr.Character.Parent ~= ent.Character.Parent) then
+							entitylib.refreshEntity(ent.Character, ent.Player)
+						end
+					end
+
+					if plr == lplr then
+						entitylib.start()
+					else
+						entitylib.refreshEntity(char, plr)
+					end
+				end)
+			)
+		end)
+	)
+
+	table.insert(entitylib.PlayerConnections[plr],
 		plr.CharacterRemoving:Connect(function(char)
 			entitylib.removeEntity(char, plr == lplr)
-		end),
-	}
+		end)
+	)
 end
 
 entitylib.removePlayer = function(plr)
