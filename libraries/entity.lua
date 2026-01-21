@@ -321,19 +321,19 @@ entitylib.addPlayer = function(plr)
 		plr.CharacterRemoving:Connect(function(char)
 			entitylib.removeEntity(char, plr == lplr)
 		end),
-		plr.Character:FindFirstChild('Humanoid'):GetPropertyChangedSignal('Team'):Connect(function()
-			for _, v in entitylib.List do
-				if v.Targetable ~= entitylib.targetCheck(v) then
-					entitylib.refreshEntity(v.Character, v.Player)
-				end
+	plr.Character:GetPropertyChangedSignal('Parent'):Connect(function()
+		for _, ent in entitylib.List do
+			if ent.Character and lplr.Character and ent.Targetable ~= (lplr.Character.Parent ~= ent.Character.Parent) then
+				entitylib.refreshEntity(ent.Character, ent.Player)
 			end
-
-			if plr == lplr then
-				entitylib.start()
-			else
-				entitylib.refreshEntity(plr.Character, plr)
-			end
-		end)
+		end
+	
+		if plr == lplr then
+			entitylib.start()
+		else
+			entitylib.refreshEntity(plr.Character, plr)
+		end
+	end)
 	}
 end
 
