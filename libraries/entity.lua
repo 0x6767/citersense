@@ -72,13 +72,11 @@ local function waitForChildOfType(obj, name, timeout, prop)
 	return returned
 end
 
-entitylib.targetCheck = function(ent)
-	if ent.TeamCheck then
-		return ent:TeamCheck()
+function entitylib.targetCheck(v)
+	if not lplr.Character or not v.Character then
+		return false
 	end
-	if ent.NPC then return true end
-	if not lplr.Character or not ent.Character then return false end
-	return lplr.Character.Parent ~= ent.Character.Parent
+	return lplr.Character.Parent ~= v.Character.Parent
 end
 
 entitylib.getUpdateConnections = function(ent)
@@ -346,13 +344,15 @@ entitylib.addPlayer = function(plr)
 			entitylib.removeEntity(char, plr == lplr)
 		end),
 
-		plr.Character and plr.Character:GetPropertyChangedSignal('Parent'):Connect(function()
-			for _, v in pairs(entitylib.List) do
-				if v.Character.Parent ~= lplr.Character.Parent and v.Targetable ~= entitylib.targetCheck(v) then
+		plr:GetPropertyChangedSignal("Character"):Connect(function()
+			for _, v in entitylib.List do
+				local opps = lplr.Character and v.Character and lplr.Character.Parent ~= v.Character.Parent
+		
+				if v.Targetable ~= opps then
 					entitylib.refreshEntity(v.Character, v.Player)
 				end
 			end
-
+		
 			if plr == lplr then
 				entitylib.start()
 			else
