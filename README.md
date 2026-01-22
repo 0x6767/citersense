@@ -1,2 +1,2 @@
 # citersense
-Credit: @7GrandDadPGN (libraries), same.exe (gui)
+Credit: @7GrandDadPGN (libraries)
